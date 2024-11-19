@@ -1,13 +1,62 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"os"
 	"strconv"
+	"time"
 )
 
+type Task struct {
+	ID          int       `json:"id"`
+	Description string    `json:"description"`
+	Status      string    `json:"status"`
+	CreatedAt   time.Time `json:"created_at"`
+	UpdatedAt   time.Time `json:"updated_at"`
+}
+
+func openFile() *os.File {
+	file, err := os.Open("items.json")
+	if err != nil {
+		fmt.Println("Error opening file: ", err)
+		os.Exit(1)
+	}
+	return file
+}
+
+func getLastId() int {
+	var tasks []Task
+	file := openFile()
+	
+	decoder := json.NewDecoder(file)
+	err = decoder.Decode(&tasks)
+	if err != nil {
+		fmt.Println("Error decoding file: ", err)
+		os.Exit(1)
+	}
+	return tasks[len(tasks)-1].ID
+}
+
 func add(item string) {
-	fmt.Println("Adding new item: ", item)
+	var task Task
+	task.ID = getLastId() + 1
+	task.Description = item
+	task.Status = "todo"
+	task.CreatedAt = time.Now()
+	task.UpdatedAt = time.Now()
+
+	file := openFile()
+	decoder := json.NewDecoder(file)
+	var tasks []Task
+	err := decoder.Decode(&tasks)
+	if err != nil {
+		fmt.Println("Error decoding file: ", err)
+		os.Exit(1)
+	}
+	tasks = append(tasks, task)
+
+	
 }
 
 func update(id int) {
@@ -30,15 +79,6 @@ func main() {
 		defer file.Close()
 	}
 
-	//file open
-	file, err := os.OpenFile("items.json", os.O_RDWR, 0644)
-	if err != nil {
-		fmt.Println("Error opening file: ", err)
-		os.Exit(1)
-	}
-	defer file.Close()
-
-	
 
 
 
